@@ -2,37 +2,38 @@
   :root {
     --color-main: #f50759;
     --dark-bg: #252525;
-    --dark-sidebar: #1c1c1c;
+    --dark-header: #1c1c1c;
     --dark-card: rgba(255, 255, 255, 0.06);
     --dark-border: rgba(255, 255, 255, 0.1);
   }
-  
-  .nav-button {
-    width: 100%;
-    background: linear-gradient(180deg, rgba(245, 7, 89, 0.10) 0%, rgba(255,255,255,0.06) 30%, rgba(255,255,255,0.03) 100%);
-    border: 1px solid rgba(245, 7, 89, 0.15);
-    border-radius: 16px; 
-    padding: 18px 24px; 
-    margin-bottom: 12px;
-    backdrop-filter: blur(20px);
-    transition: all 0.4s;
+
+  /* --- NUEVOS ESTILOS PARA LA NAVEGACIÓN SUPERIOR (PESTAÑAS) --- */
+  .nav-tab {
+    padding: 8px 16px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 8px;
     font-weight: 600;
+    color: #a0a0a0; /* Color grisáceo para inactivas */
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    background-color: transparent;
+  }
+  .nav-tab:hover {
+    background-color: var(--dark-card);
     color: #ededed;
   }
-  .nav-button:hover {
-    transform: translateY(-2px);
-    border-color: rgba(245, 7, 89, 0.3);
-  }
-  .nav-button.active {
-    background: linear-gradient(135deg, #f50759, #ff6b9d);
-    border-color: #f50759;
+  .nav-tab.active {
     color: white;
+    background-color: var(--color-main);
+    box-shadow: 0 4px 12px rgba(245, 7, 89, 0.3);
   }
-  .nav-button i { font-size: 1.25rem; }
+  .nav-tab i {
+    font-size: 1.25rem;
+  }
 
+  /* --- ESTILOS GENERALES Y DE TARJETAS --- */
   .card {
     background: var(--dark-card);
     border: 1px solid var(--dark-border);
@@ -45,177 +46,89 @@
     margin-bottom: 1rem;
   }
     
-  .dashboard-stat-card {
-    background: linear-gradient(180deg, rgba(245, 7, 89, 0.15) 0%, rgba(255,255,255,0.08) 30%, rgba(255,255,255,0.04) 100%);
-    border: 1px solid rgba(245, 7, 89, 0.2);
-    border-radius: 1.125rem;
-    padding: 1.25rem; 
-    backdrop-filter: blur(20px);
-    text-align: center;
-  }
-  .dashboard-stat-card h3 {
-    font-size: 0.875rem;
-    color: #9ca3af;
-    margin-bottom: 0.75rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-  }
-  .dashboard-stat-card p {
-    font-size: 1.875rem;
-    font-weight: 700;
-    color: white;
-  }
-  
-  table { text-align: left; width: 100%; }
-  table th { padding: 1rem; background-color: rgba(255, 255, 255, 0.05); font-size: 0.75rem; font-weight: 600; color: #9ca3af; text-transform: uppercase; border-bottom: 1px solid var(--dark-border); }
-  table td { padding: 1rem; border-bottom: 1px solid var(--dark-border); color: #d1d5db; }
-  table tbody tr:hover { background-color: rgba(255, 255, 255, 0.03); }
-
-  .delete-btn { color: #6b7280; transition: color 0.2s; }
-  .delete-btn:hover { color: #ef4444; }
-
-  .badge { padding: 0.125rem 0.625rem; font-size: 0.75rem; font-weight: 600; border-radius: 9999px; }
-  .badge.gasto { background-color: rgba(239, 68, 68, 0.15); color: #f87171; }
-  .badge.ingreso { background-color: rgba(74, 222, 128, 0.15); color: #4ade80; }
-    
-  /* --- CÓDIGO CORREGIDO PARA NOTIFICACIONES --- */
- #notification-container { 
-  position: fixed; 
-  bottom: 1.25rem;
-  right: 1.25rem; 
-  z-index: 50; 
-  display: flex; 
-  flex-direction: column-reverse;
-  gap: 0.75rem; 
-}
-  .notification { 
-    display: flex; 
-    align-items: center; 
-    gap: 0.75rem; 
-    padding: 1rem 1.5rem; 
-    border-radius: 0.5rem; 
-    color: white; 
-    font-weight: 700; 
-    min-width: 320px; 
-    backdrop-filter: blur(16px); 
-    transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); 
-    animation: fade-in-right 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; 
-  }
-  .notification.success { background-color: rgba(74, 222, 128, 0.8); }
-  .notification.error { background-color: rgba(239, 68, 68, 0.8); }
-  .notification.fade-out {
-    opacity: 0;
-    transform: translateX(2rem);
-  }
-  
-  /* Loader & Animations */
-  .loader-spinner { width: 56px; height: 56px; border-radius: 50%; border: 8px solid rgba(255,255,255,0.1); border-top-color: var(--color-main); animation: spin 1s linear infinite; }
-  @keyframes spin { 100% { transform: rotate(360deg); } }
-  @keyframes fade-in-right { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
-  .animate-scale-in { animation: scale-in 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
-  
+  /* --- ESTILOS PARA BOTONES DE ACCIÓN EN LA CABECERA --- */
   .main-btn {
     background: linear-gradient(135deg, #f50759, #ff6b9d);
     color: white;
     font-weight: 600;
-    padding: 12px 20px;
-    border-radius: 16px;
-    transition: all 0.4s;
+    padding: 10px 18px;
+    border-radius: 14px;
+    transition: all 0.3s;
     border: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
   .main-btn:hover {
     transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(245, 7, 89, 0.3);
   }
 
-/* --- NUEVO ESTILO PARA TARJETAS DE ESTADÍSTICAS --- */
-.stat-card-new {
-    background: linear-gradient(180deg, rgba(245, 7, 89, 0.15) 0%, rgba(255,255,255,0.08) 30%, rgba(255,255,255,0.04) 100%);
-    border: 1px solid rgba(245, 7, 89, 0.2);
-    border-radius: 18px; 
-    padding: 16px; 
-    backdrop-filter: blur(20px);
-    box-shadow: 0 6px 24px rgba(0,0,0,0.3), 0 2px 6px rgba(245, 7, 89, 0.1);
-    transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+  .secondary-btn {
+    background-color: rgba(255, 255, 255, 0.08);
+    color: #d1d5db;
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
     display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-}
-
-.stat-card-new:hover {
-    transform: translateY(-3px);
-    box-shadow: 0 8px 28px rgba(0,0,0,0.4), 0 3px 12px rgba(245, 7, 89, 0.25);
-    border-color: rgba(245, 7, 89, 0.4);
-}
-
-.stat-card-new h3 {
-  font-size: 0.875rem; /* text-sm */
-  font-weight: 500; /* font-medium */
-  color: #9ca3af; /* text-gray-400 */
-  margin-bottom: 0.75rem; /* mb-3 */
-  display: flex;
-  align-items: center;
-  gap: 0.5rem; /* gap-2 */
-}
-
-.stat-card-new .value-highlight {
-    background: linear-gradient(135deg, var(--primary-color), #e91e63);
-    color: white; 
-    text-align: center; /* <-- CORREGIDO */
-    padding: 10px 14px; 
-    margin-top: 6px; 
-    border-radius: 14px; 
-    font-size: 1.5rem;
-    font-weight: 800;
-    box-shadow: 0 4px 16px rgba(245, 7, 89, 0.4);
-    position: relative;
-    overflow: hidden;
-}
-
-.stat-card-new .value-highlight.green {
-    background: linear-gradient(135deg, #00c851, #007e33);
-    box-shadow: 0 4px 16px rgba(0, 200, 81, 0.4);
-}
-
-.stat-card-new .value-highlight.red {
-    background: linear-gradient(135deg, #f50759, #e91e63);
-    box-shadow: 0 4px 16px rgba(245, 7, 89, 0.4);
-}
-
-.stat-card-new .value-highlight.blue {
-    background: linear-gradient(135deg, #33b5e5, #0099cc);
-    box-shadow: 0 4px 16px rgba(51, 181, 229, 0.4);
-}
-
-/* --- ESTILOS PARA EL MENÚ LATERAL RESPONSIVO --- */
-@media (max-width: 768px) {
-  #sidebar {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100%;
-    z-index: 40;
-    transition: transform 0.3s ease-in-out;
-    transform: translateX(-100%); /* Oculto por defecto */
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    transition: all 0.3s;
+    border: 1px solid var(--dark-border);
   }
-
-  #sidebar.open {
-    transform: translateX(0%); /* Visible cuando tenga la clase 'open' */
+  .secondary-btn:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    color: white;
+    transform: translateY(-2px);
   }
-}
+  
+  /* --- TABLAS Y OTROS ELEMENTOS --- */
+  table { text-align: left; width: 100%; }
+  table th { padding: 1rem; background-color: rgba(255, 255, 255, 0.05); font-size: 0.75rem; font-weight: 600; color: #9ca3af; text-transform: uppercase; border-bottom: 1px solid var(--dark-border); }
+  table td { padding: 1rem; border-bottom: 1px solid var(--dark-border); color: #d1d5db; }
+  table tbody tr:hover { background-color: rgba(255, 255, 255, 0.03); }
+  .delete-btn { color: #6b7280; transition: color 0.2s; }
+  .delete-btn:hover { color: #ef4444; }
+  .badge { padding: 0.125rem 0.625rem; font-size: 0.75rem; font-weight: 600; border-radius: 9999px; }
+  .badge.gasto { background-color: rgba(239, 68, 68, 0.15); color: #f87171; }
+  .badge.ingreso { background-color: rgba(74, 222, 128, 0.15); color: #4ade80; }
+    
+  /* --- NOTIFICACIONES, LOADER, ANIMACIONES --- */
+  #notification-container { position: fixed; bottom: 1.25rem; right: 1.25rem; z-index: 50; display: flex; flex-direction: column-reverse; gap: 0.75rem; }
+  .notification { display: flex; align-items: center; gap: 0.75rem; padding: 1rem 1.5rem; border-radius: 0.5rem; color: white; font-weight: 700; min-width: 320px; backdrop-filter: blur(16px); transition: all 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94); animation: fade-in-right 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
+  .notification.success { background-color: rgba(74, 222, 128, 0.8); }
+  .notification.error { background-color: rgba(239, 68, 68, 0.8); }
+  .notification.fade-out { opacity: 0; transform: translateX(2rem); }
+  .loader-spinner { width: 56px; height: 56px; border-radius: 50%; border: 8px solid rgba(255,255,255,0.1); border-top-color: var(--color-main); animation: spin 1s linear infinite; }
+  @keyframes spin { 100% { transform: rotate(360deg); } }
+  @keyframes fade-in-right { from { opacity: 0; transform: translateX(20px); } to { opacity: 1; transform: translateX(0); } }
+  .animate-scale-in { animation: scale-in 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; }
 
-/* Ajuste para el botón principal en móviles */
-@media (max-width: 640px) {
-  #main-action-btn {
-    width: 48px;
-    height: 48px;
-    padding: 0;
-    font-size: 1.5rem;
-  }
-}
+  /* --- TARJETAS DE ESTADÍSTICAS DEL DASHBOARD --- */
+  .stat-card-new { background: linear-gradient(180deg, rgba(245, 7, 89, 0.15) 0%, rgba(255,255,255,0.08) 30%, rgba(255,255,255,0.04) 100%); border: 1px solid rgba(245, 7, 89, 0.2); border-radius: 18px; padding: 16px; backdrop-filter: blur(20px); box-shadow: 0 6px 24px rgba(0,0,0,0.3), 0 2px 6px rgba(245, 7, 89, 0.1); transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); display: flex; flex-direction: column; justify-content: space-between; }
+  .stat-card-new:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(0,0,0,0.4), 0 3px 12px rgba(245, 7, 89, 0.25); border-color: rgba(245, 7, 89, 0.4); }
+  .stat-card-new h3 { font-size: 0.875rem; font-weight: 500; color: #9ca3af; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+  .stat-card-new .value-highlight { color: white; text-align: center; padding: 10px 14px; margin-top: 6px; border-radius: 14px; font-size: 1.5rem; font-weight: 800; position: relative; overflow: hidden; }
+  .stat-card-new .value-highlight.green { background: linear-gradient(135deg, #00c851, #007e33); box-shadow: 0 4px 16px rgba(0, 200, 81, 0.4); }
+  .stat-card-new .value-highlight.red { background: linear-gradient(135deg, #f50759, #e91e63); box-shadow: 0 4px 16px rgba(245, 7, 89, 0.4); }
+  .stat-card-new .value-highlight.blue { background: linear-gradient(135deg, #33b5e5, #0099cc); box-shadow: 0 4px 16px rgba(51, 181, 229, 0.4); }
+  .stat-card-new .value-highlight.purple { background: linear-gradient(135deg, #a855f7, #7e22ce); box-shadow: 0 4px 16px rgba(168, 85, 247, 0.4); }
+  .stat-card-new .value-highlight.orange { background: linear-gradient(135deg, #f97316, #ea580c); box-shadow: 0 4px 16px rgba(249, 115, 22, 0.4); }
 
-/* Estilos para las tarjetas de cuentas */
+  /* --- TARJETAS DE CUENTAS (SIN CAMBIOS) --- */
+  /* (Aquí irían todos los estilos de .cuenta-card-new, .cuenta-card-dashboard, etc. que no hemos modificado) */
+
+  /* --- LEYENDA DEL GRÁFICO (SIN CAMBIOS) --- */
+  #expense-legend { max-height: 110px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 8px; padding-top: 8px; border-top: 1px solid var(--dark-border); }
+  .legend-item { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #d1d5db; }
+  .legend-color-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .legend-label { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex-grow: 1; }
+  .legend-value { font-weight: 600; color: #9ca3af; }
+  
+/* --- ESTILOS UNIFICADOS PARA TODAS LAS TARJETAS DE CUENTAS --- */
+
+/* 1. Estilos para las tarjetas en la vista 'Cuentas' */
 .cuenta-card-new {
     background: linear-gradient(180deg, rgba(245, 7, 89, 0.15) 0%, rgba(255,255,255,0.08) 30%, rgba(255,255,255,0.04) 100%);
     border: 1px solid rgba(245, 7, 89, 0.2);
@@ -233,7 +146,6 @@
     transform: translateY(-3px);
     box-shadow: 0 8px 28px rgba(0,0,0,0.4), 0 3px 12px rgba(245, 7, 89, 0.25);
     border-color: rgba(245, 7, 89, 0.4);
-    background: linear-gradient(180deg, rgba(245, 7, 89, 0.25) 0%, rgba(255,255,255,0.12) 30%, rgba(255,255,255,0.06) 100%);
 }
 
 .card-title-new {
@@ -253,20 +165,11 @@
     margin-bottom: 8px;
     position: relative;
     z-index: 2;
-    line-height: 1.2;
 }
 
 .card-data-new span:first-child { 
     color: #bbb; 
     font-weight: 500;
-    display: flex;
-    align-items: center;
-}
-
-.card-data-new span:last-child { 
-    font-weight: 700;
-    font-size: 14px;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 
 .ingreso-val-new { 
@@ -275,8 +178,6 @@
     padding: 4px 8px;
     border-radius: 8px;
     border: 1px solid rgba(0, 200, 81, 0.3);
-    font-size: 13px;
-    font-weight: 600;
 }
 
 .egreso-val-new { 
@@ -285,58 +186,30 @@
     padding: 4px 8px;
     border-radius: 8px;
     border: 1px solid rgba(245, 7, 89, 0.3);
-    font-size: 13px;
-    font-weight: 600;
 }
 
 .card-saldo-highlight-new {
     background: linear-gradient(135deg, #f50759, #e91e63);
     color: white; 
-    text-align: center;
     padding: 12px 16px; 
     margin-top: 12px; 
     border-radius: 14px; 
     display: flex; 
     justify-content: space-between; 
     align-items: center;
-    box-shadow: 0 4px 16px rgba(245, 7, 89, 0.4), inset 0 1px 0 rgba(255,255,255,0.2);
+    box-shadow: 0 4px 16px rgba(245, 7, 89, 0.4);
     position: relative;
     overflow: hidden;
-    z-index: 2;
-}
-
-.card-saldo-highlight-new::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
-    transform: rotate(45deg);
-    animation: shimmer 4s infinite;
 }
 
 .saldo-label-new { 
-    opacity: 0.9;
     font-weight: 600;
-    position: relative;
-    z-index: 3;
     font-size: 14px;
 }
 
 .saldo-value-new { 
     font-weight: 800; 
     font-size: 16px;
-    position: relative;
-    z-index: 3;
-    text-shadow: 0 1px 3px rgba(0,0,0,0.3);
-}
-
-@keyframes shimmer {
-    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
-    50% { transform: translateX(100%) translateY(100%) rotate(45deg); }
-    100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
 }
 
 @keyframes slideInUp {
@@ -350,7 +223,8 @@
     }
 }
 
-/* Estilos para las tarjetas de cuentas en el dashboard */
+
+/* 2. Estilos para las tarjetas en el 'Dashboard' */
 .cuenta-card-dashboard {
     background: linear-gradient(180deg, rgba(245, 7, 89, 0.12) 0%, rgba(255,255,255,0.06) 30%, rgba(255,255,255,0.03) 100%);
     border: 1px solid rgba(245, 7, 89, 0.15);
@@ -368,7 +242,6 @@
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(0,0,0,0.3), 0 2px 8px rgba(245, 7, 89, 0.2);
     border-color: rgba(245, 7, 89, 0.3);
-    background: linear-gradient(180deg, rgba(245, 7, 89, 0.18) 0%, rgba(255,255,255,0.08) 30%, rgba(255,255,255,0.04) 100%);
 }
 
 .card-title-dashboard {
@@ -377,8 +250,6 @@
     color: #ededed;
     margin-bottom: 8px;
     text-align: center;
-    position: relative;
-    z-index: 2;
     text-shadow: 0 1px 2px rgba(0,0,0,0.4);
 }
 
@@ -388,21 +259,12 @@
     align-items: center; 
     font-size: 11px; 
     margin-bottom: 6px;
-    position: relative;
-    z-index: 2;
-    line-height: 1.1;
 }
 
 .card-data-dashboard span:first-child { 
     color: #bbb; 
     font-weight: 500;
     font-size: 10px;
-}
-
-.card-data-dashboard span:last-child { 
-    font-weight: 600;
-    font-size: 11px;
-    text-shadow: 0 1px 1px rgba(0,0,0,0.3);
 }
 
 .ingreso-val-dashboard { 
@@ -412,7 +274,6 @@
     border-radius: 6px;
     border: 1px solid rgba(0, 200, 81, 0.25);
     font-size: 10px;
-    font-weight: 600;
 }
 
 .egreso-val-dashboard { 
@@ -422,23 +283,20 @@
     border-radius: 6px;
     border: 1px solid rgba(245, 7, 89, 0.25);
     font-size: 10px;
-    font-weight: 600;
 }
 
 .card-saldo-highlight-dashboard {
     background: linear-gradient(135deg, #f50759, #e91e63);
     color: white; 
-    text-align: center;
     padding: 8px 10px; 
     margin-top: 8px; 
     border-radius: 10px; 
     display: flex; 
     justify-content: space-between; 
     align-items: center;
-    box-shadow: 0 3px 12px rgba(245, 7, 89, 0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+    box-shadow: 0 3px 12px rgba(245, 7, 89, 0.3);
     position: relative;
     overflow: hidden;
-    z-index: 2;
 }
 
 .card-saldo-highlight-dashboard::before {
@@ -449,24 +307,17 @@
     width: 200%;
     height: 200%;
     background: linear-gradient(45deg, transparent, rgba(255,255,255,0.08), transparent);
-    transform: rotate(45deg);
     animation: shimmer-dashboard 5s infinite;
 }
 
 .saldo-label-dashboard { 
-    opacity: 0.9;
-    font-weight: 600;
-    position: relative;
-    z-index: 3;
     font-size: 11px;
+    font-weight: 600;
 }
 
 .saldo-value-dashboard { 
     font-weight: 800; 
     font-size: 12px;
-    position: relative;
-    z-index: 3;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 
 @keyframes shimmer-dashboard {
@@ -475,68 +326,40 @@
     100% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
-    .cuenta-card-dashboard {
-        padding: 12px;
-    }
-    
-    .card-title-dashboard {
-        font-size: 13px;
-    }
-    
-    .card-data-dashboard {
-        font-size: 10px;
-    }
-}
-
-/* --- ESTILOS PARA LA LEYENDA PERSONALIZADA DEL GRÁFICO --- */
-#expense-legend {
-    max-height: 110px; /* Altura máxima para la leyenda */
-    overflow-y: auto;  /* Scroll si hay muchas categorías */
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); /* Columnas responsivas */
-    gap: 8px;
-    padding-top: 8px;
-    border-top: 1px solid var(--dark-border); /* Línea separadora */
-}
-
-.legend-item {
+/* --- ESTILOS PARA LOS BOTONES DEL MENÚ MÓVIL --- */
+.mobile-nav-button {
+    width: 100%;
+    padding: 14px 20px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
-    gap: 8px;
-    font-size: 12px;
-    color: #d1d5db; /* text-gray-300 */
-}
-
-.legend-color-dot {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    flex-shrink: 0;
-}
-
-.legend-label {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis; /* Evita que texto largo rompa el diseño */
-    flex-grow: 1;
-}
-
-.legend-value {
+    gap: 12px;
     font-weight: 600;
-    color: #9ca3af; /* text-gray-400 */
+    color: #a0a0a0;
+    transition: all 0.3s ease;
+    background-color: var(--dark-card);
+    border: 1px solid var(--dark-border);
 }
 
-.stat-card-new .value-highlight.purple {
-    background: linear-gradient(135deg, #a855f7, #7e22ce);
-    box-shadow: 0 4px 16px rgba(168, 85, 247, 0.4);
+.mobile-nav-button.active {
+    color: white;
+    background-color: var(--color-main);
+    border-color: var(--color-main);
 }
 
-/* En CSS.html */
-.stat-card-new .value-highlight.orange {
-    background: linear-gradient(135deg, #f97316, #ea580c);
-    box-shadow: 0 4px 16px rgba(249, 115, 22, 0.4);
+/* --- ESTILOS PARA LA TABLA DE TRANSACCIONES --- */
+
+/* Contenedor de la tabla para que el sticky funcione */
+.card.overflow-x-auto {
+    max-height: 70vh; /* Altura máxima antes de que aparezca el scroll */
+    overflow-y: auto;
 }
 
+#transactions-table thead th {
+    position: sticky;
+    top: -1px; /* Pequeño ajuste para evitar artifacts visuales */
+    background-color: #3a3a3a; /* Un color de fondo ligeramente más claro que el header de la tabla */
+    z-index: 10;
+}
+  
 </style>
