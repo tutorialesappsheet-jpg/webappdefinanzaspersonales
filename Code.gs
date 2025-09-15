@@ -2,13 +2,14 @@
 
 const SPREADSHEET_ID = '1sm0oVCaj7dyfDSnbX97NSxo4BjxJtqp8LrwYdGHwrd0'; // ⚠️ ¡Recuerda poner tu ID aquí!
 
+// En Code.gs
 const SCHEMA = {
   accounts:     { sheetName: 'Cuentas',       columns: ['ID', 'Nombre', 'Tipo', 'SaldoInicial'] },
   categories:   { sheetName: 'Categorias',    columns: ['ID', 'Nombre', 'Tipo', 'Presupuesto'] },
   transactions: { sheetName: 'Transacciones', columns: ['ID', 'Fecha', 'Descripcion', 'Monto', 'CuentaID', 'Categoria', 'Tipo'] },
-  // --- CAMBIO CLAVE: Nueva columna 'CuentaAsociadaID' ---
   goals:        { sheetName: 'Metas',         columns: ['ID', 'Nombre', 'MontoObjetivo', 'MontoActual', 'CuentaAsociadaID'] },
-  debts:        { sheetName: 'Deudas',        columns: ['ID', 'Nombre', 'MontoTotal', 'Pagos'] }
+  // --- ESQUEMA DE DEUDAS ACTUALIZADO ---
+  debts:        { sheetName: 'Deudas',        columns: ['ID', 'Nombre', 'MontoTotal', 'MontoPagado'] }
 };
 
 function doGet(e) {
@@ -95,44 +96,64 @@ function updateItem(entity, id, updates) {
   return { success: false, message: 'ID no encontrado' };
 }
 
-// --- CAMBIO CLAVE: Nueva función para manejar aportes a metas ---
+
+
 function addContribution(contributionData) {
   try {
     const { goalId, sourceAccountId, amount, fecha, description, goalName } = contributionData;
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
     
-    // 1. Crear una transacción de 'gasto' desde la cuenta de origen
-    const transaction = {
-      ID: 'TRN-' + new Date().getTime(),
-      Fecha: new Date(fecha.replace(/-/g, '/')),
-      Descripcion: description || `Aporte a meta: ${goalName}`,
+    // 1. Encontrar la meta y su cuenta de destino asociada
+    const goalsSheet = ss.getSheetByName(SCHEMA.goals.sheetName);
+    const goalFinder = goalsSheet.getRange("A:A").createTextFinder(goalId).matchEntireCell(true).findNext();
+    if (!goalFinder) return { success: false, message: 'Meta no encontrada.' };
+    
+    const goalRow = goalFinder.getRow();
+    const cuentaAsociadaCol = SCHEMA.goals.columns.indexOf('CuentaAsociadaID') + 1;
+    const destinationAccountId = goalsSheet.getRange(goalRow, cuentaAsociadaCol).getValue();
+
+    if (!destinationAccountId) return { success: false, message: 'La meta no tiene una cuenta asociada para recibir el aporte.' };
+    if (sourceAccountId === destinationAccountId) return { success: false, message: 'La cuenta de origen y destino no pueden ser la misma.' };
+
+    const transactionDate = new Date(fecha.replace(/-/g, '/'));
+    const baseId = new Date().getTime();
+
+    // 2. Crear la transacción de GASTO (Transferencia Saliente)
+    const gasto = {
+      ID: `TRN-${baseId}-G`,
+      Fecha: transactionDate,
+      Descripcion: description || `Aporte a: ${goalName}`,
       Monto: amount,
       CuentaID: sourceAccountId,
-      Categoria: 'Ahorro / Metas',
-      Tipo: 'gasto' 
+      Categoria: 'Transferencia Saliente',
+      Tipo: 'gasto'
     };
-    addRow('transactions', transaction);
+    addRow('transactions', gasto);
 
-    // 2. Actualizar el MontoActual de la meta
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const goalsSheet = ss.getSheetByName(SCHEMA.goals.sheetName);
-    const textFinder = goalsSheet.getRange("A:A").createTextFinder(goalId).matchEntireCell(true).findNext();
+    // 3. Crear la transacción de INGRESO (Transferencia Entrante)
+    const ingreso = {
+      ID: `TRN-${baseId}-I`,
+      Fecha: transactionDate,
+      Descripcion: description || `Aporte desde cuenta`,
+      Monto: amount,
+      CuentaID: destinationAccountId,
+      Categoria: 'Transferencia Entrante',
+      Tipo: 'ingreso'
+    };
+    addRow('transactions', ingreso);
+
+    // 4. Actualizar el MontoActual de la meta
+    const montoActualCol = SCHEMA.goals.columns.indexOf('MontoActual') + 1;
+    const currentAmount = goalsSheet.getRange(goalRow, montoActualCol).getValue();
+    const newAmount = (Number(currentAmount) || 0) + Number(amount);
+    goalsSheet.getRange(goalRow, montoActualCol).setValue(newAmount);
     
-    if (textFinder) {
-      const row = textFinder.getRow();
-      const montoActualCol = SCHEMA.goals.columns.indexOf('MontoActual') + 1;
-      const currentAmount = goalsSheet.getRange(row, montoActualCol).getValue();
-      const newAmount = (Number(currentAmount) || 0) + Number(amount);
-      goalsSheet.getRange(row, montoActualCol).setValue(newAmount);
-      
-      // Devolvemos la transacción Y el nuevo monto de la meta
-      return { 
-        success: true, 
-        transaction: transaction, 
-        updatedGoal: { id: goalId, newAmount: newAmount } 
-      };
-    } else {
-      return { success: false, message: 'Meta no encontrada para actualizar el monto.' };
-    }
+    return { 
+      success: true, 
+      transactions: [gasto, ingreso], 
+      updatedGoal: { id: goalId, newAmount: newAmount } 
+    };
+
   } catch(e) {
     return { success: false, message: `Error en el servidor: ${e.message}` };
   }
@@ -164,6 +185,54 @@ function addGoal(goal) {
   return addRow('goals', goal); 
 }
 
+// En Code.gs
+function addDebtPayment(paymentData) {
+  try {
+    const { debtId, sourceAccountId, amount, fecha, description, debtName } = paymentData;
+
+    // 1. Crear la transacción de 'gasto' desde la cuenta de origen
+    const transaction = {
+      ID: 'TRN-PAY-' + new Date().getTime(),
+      Fecha: new Date(fecha.replace(/-/g, '/')),
+      Descripcion: description || `Pago de deuda: ${debtName}`,
+      Monto: amount,
+      CuentaID: sourceAccountId,
+      Categoria: 'Pago de Deuda',
+      Tipo: 'gasto'
+    };
+    addRow('transactions', transaction);
+
+    // 2. Actualizar el MontoPagado de la deuda
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const debtsSheet = ss.getSheetByName(SCHEMA.debts.sheetName);
+    const textFinder = debtsSheet.getRange("A:A").createTextFinder(debtId).matchEntireCell(true).findNext();
+
+    if (textFinder) {
+      const row = textFinder.getRow();
+      const montoPagadoCol = SCHEMA.debts.columns.indexOf('MontoPagado') + 1;
+      const currentPaidAmount = debtsSheet.getRange(row, montoPagadoCol).getValue();
+      const newPaidAmount = (Number(currentPaidAmount) || 0) + Number(amount);
+      debtsSheet.getRange(row, montoPagadoCol).setValue(newPaidAmount);
+
+      return { 
+        success: true, 
+        transaction: transaction, 
+        updatedDebt: { id: debtId, newPaidAmount: newPaidAmount } 
+      };
+    } else {
+      return { success: false, message: 'Deuda no encontrada para actualizar.' };
+    }
+  } catch(e) {
+    return { success: false, message: `Error en el servidor: ${e.message}` };
+  }
+}
+// En Code.gs
+function addDebt(debt) { 
+  debt.ID = 'DEB-' + new Date().getTime(); 
+  debt.MontoPagado = debt.MontoPagado || 0; // Se inicializa en 0
+  return addRow('debts', debt); 
+}
+
 function deleteGoal(id) { return deleteRowById('goals', id); }
-function addDebt(debt) { debt.ID = 'DEB-' + new Date().getTime(); debt.Pagos = debt.Pagos || '[]'; return addRow('debts', debt); }
+
 function deleteDebt(id) { return deleteRowById('debts', id); }
