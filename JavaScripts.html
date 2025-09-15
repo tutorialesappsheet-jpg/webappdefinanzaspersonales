@@ -458,13 +458,7 @@ function renderAccountCards() {
     `;
 }
 
-  function renderGoals() {
-    if (!state.goals || state.goals.length === 0) { appContent.innerHTML = `<div class="card text-center py-8"><p class="text-gray-500">No hay metas definidas.</p></div>`; return; }
-    appContent.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-type="goals">${state.goals.map(goal => {
-      const percentage = Math.min((goal.MontoActual / goal.MontoObjetivo) * 100, 100);
-      return `<div class="card flex flex-col justify-between" data-id="${goal.ID}"><div><div class="flex justify-between items-start"><h3 class="card-title">${goal.Nombre}</h3><button class="delete-btn"><i class="ph ph-trash"></i></button></div><p class="text-xl font-bold text-main">${currencyFormatter.format(goal.MontoActual)}</p><p class="text-sm text-gray-500 mb-2">de ${currencyFormatter.format(goal.MontoObjetivo)}</p><div class="w-full bg-white/10 rounded-full h-2.5 mb-4"><div class="bg-main h-2.5 rounded-full" style="width: ${percentage}%"></div></div></div><form class="add-contribution-form flex gap-2"><input type="number" step="0.01" placeholder="Añadir monto" class="w-full p-3 bg-white/10 border-2 border-white/20 rounded-lg focus:border-main outline-none text-white" required><button type="submit" class="main-btn-sm">Añadir</button></form></div>`;
-    }).join('')}</div>`;
-  }
+
   
   function renderDebts() {
       if (!state.debts || state.debts.length === 0) { appContent.innerHTML = `<div class="card text-center py-8"><p class="text-gray-500">No hay deudas registradas.</p></div>`; return; }
@@ -557,16 +551,7 @@ function renderAccountCards() {
     tipoSelect.addEventListener('change', () => { presupuestoContainer.style.display = tipoSelect.value === 'gasto' ? 'block' : 'none'; });
   }
 
-  function showGoalModal() {
-    const content = `
-        <div><label for="nombre" class="font-semibold text-sm mb-2 block">🎯 Nombre de la Meta</label><input type="text" id="nombre" class="w-full p-3 bg-white/10 border-2 border-white/20 rounded-lg focus:border-main outline-none" required></div>
-        <div class="flex gap-4">
-            <div class="flex-1"><label for="monto-objetivo" class="font-semibold text-sm mb-2 block">💵 Monto Objetivo</label><div class="relative"><span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-main">$</span><input type="number" id="monto-objetivo" placeholder="0.00" min="0.01" step="0.01" class="w-full p-3 pl-8 bg-white text-black rounded-lg border-2 border-gray-300" required></div></div>
-            <div class="flex-1"><label for="monto-actual" class="font-semibold text-sm mb-2 block">💵 Ahorro Inicial (Opcional)</label><div class="relative"><span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-main">$</span><input type="number" id="monto-actual" placeholder="0.00" step="0.01" class="w-full p-3 pl-8 bg-white text-black rounded-lg border-2 border-gray-300"></div></div>
-        </div>`;
-    const buttons = `<button type="button" class="cancel-btn w-full p-3 bg-white/10 rounded-lg font-semibold hover:bg-white/20">Cancelar</button><button type="submit" class="submit-btn w-full p-3 bg-main rounded-lg font-semibold hover:bg-pink-700 disabled:bg-gray-500">Guardar Meta</button>`;
-    showModal(createModalShell('Nueva Meta de Ahorro', 'goal-form', content, buttons));
-  }
+
 
   function showDebtModal() {
     const content = `
@@ -610,6 +595,12 @@ function renderAccountCards() {
   refreshBtn.addEventListener('click', () => { showNotification('success', 'Actualizando datos...'); initialize(); });
   appContent.addEventListener('click', e => {
       const deleteBtn = e.target.closest('.delete-btn');
+      const contributionBtn = e.target.closest('.add-contribution-btn');
+if (contributionBtn) {
+    const goalId = contributionBtn.dataset.goalId;
+    const goalName = contributionBtn.dataset.goalName;
+    showContributionModal(goalId, goalName);
+}
       if (deleteBtn) {
           const row = deleteBtn.closest('[data-id]');
           const type = row.closest('[data-type]').dataset.type;
@@ -631,39 +622,100 @@ function renderAccountCards() {
       const card = form.closest('[data-id]');
       const id = card.dataset.id;
       const amount = parseFloat(form.querySelector('input').value);
-      if (form.classList.contains('add-contribution-form')) handleAddContribution(id, amount);
+
       if (form.classList.contains('add-payment-form')) handleAddPayment(id, amount);
   });
 
   modalContainer.addEventListener('click', e => { if (e.target.closest('.cancel-btn')) hideModal(); });
   
-  modalContainer.addEventListener('submit', e => {
-    e.preventDefault();
-    const form = e.target;
-    const submitBtn = form.querySelector('.submit-btn');
-    if (!submitBtn) return;
-    const originalBtnText = submitBtn.textContent;
-    submitBtn.textContent = 'Guardando...';
-    submitBtn.disabled = true;
-    let data, functionName, stateKey;
-    try {
-      const get = id => form.querySelector(`#${id}`).value;
-      const getNum = id => parseFloat(form.querySelector(`#${id}`).value) || 0;
-      switch (form.id) {
-        case 'transaction-form': data = { Tipo: get('tipo'), Fecha: get('fecha'), Descripcion: get('descripcion'), Monto: getNum('monto'), CuentaID: get('cuenta'), Categoria: get('categoria') }; functionName = 'addTransaction'; stateKey = 'transactions'; if(!get('tipo')) throw new Error("Selecciona una categoría válida."); break;
-        case 'account-form': data = { Nombre: get('nombre'), Tipo: get('tipo'), SaldoInicial: getNum('saldo') }; functionName = 'addAccount'; stateKey = 'accounts'; break;
-        case 'category-form': data = { Nombre: get('nombre'), Tipo: get('tipo'), Presupuesto: getNum('presupuesto') }; functionName = 'addCategory'; stateKey = 'categories'; break;
-        case 'goal-form': data = { Nombre: get('nombre'), MontoObjetivo: getNum('monto-objetivo'), MontoActual: getNum('monto-actual') }; functionName = 'addGoal'; stateKey = 'goals'; break;
-        case 'debt-form': data = { Nombre: get('nombre'), MontoTotal: getNum('monto-total') }; functionName = 'addDebt'; stateKey = 'debts'; break;
-        default: throw new Error("Formulario desconocido.");
-      }
-      handleAdd(stateKey, functionName, data).finally(() => { submitBtn.textContent = originalBtnText; submitBtn.disabled = false; });
-    } catch (error) {
-      showNotification('error', error.message);
-      submitBtn.textContent = originalBtnText;
-      submitBtn.disabled = false;
+// Archivo: JavaScript.html (Bloque completo y actualizado)
+
+modalContainer.addEventListener('click', e => { if (e.target.closest('.cancel-btn')) hideModal(); });
+  
+modalContainer.addEventListener('submit', e => {
+  e.preventDefault();
+  const form = e.target;
+  const submitBtn = form.querySelector('.submit-btn');
+  if (!submitBtn) return;
+  const originalBtnText = submitBtn.textContent;
+  submitBtn.textContent = 'Guardando...';
+  submitBtn.disabled = true;
+  let data, functionName, stateKey;
+  try {
+    const get = id => form.querySelector(`#${id}`).value;
+    const getNum = id => parseFloat(form.querySelector(`#${id}`).value) || 0;
+    
+    switch (form.id) {
+      case 'transaction-form': 
+        data = { Tipo: get('tipo'), Fecha: get('fecha'), Descripcion: get('descripcion'), Monto: getNum('monto'), CuentaID: get('cuenta'), Categoria: get('categoria') }; 
+        functionName = 'addTransaction'; 
+        stateKey = 'transactions'; 
+        if(!get('tipo')) throw new Error("Selecciona una categoría válida."); 
+        break;
+      
+      case 'account-form': 
+        data = { Nombre: get('nombre'), Tipo: get('tipo'), SaldoInicial: getNum('saldo') }; 
+        functionName = 'addAccount'; 
+        stateKey = 'accounts'; 
+        break;
+      
+      case 'category-form': 
+        data = { Nombre: get('nombre'), Tipo: get('tipo'), Presupuesto: getNum('presupuesto') }; 
+        functionName = 'addCategory'; 
+        stateKey = 'categories'; 
+        break;
+      
+      // --- CAMBIO CLAVE: Actualizado para incluir la cuenta asociada ---
+      case 'goal-form': 
+        data = { 
+            Nombre: get('nombre'), 
+            MontoObjetivo: getNum('monto-objetivo'), 
+            MontoActual: getNum('monto-actual'),
+            CuentaAsociadaID: get('cuenta-asociada') // Campo nuevo
+        }; 
+        functionName = 'addGoal'; 
+        stateKey = 'goals'; 
+        break;
+      
+      case 'debt-form': 
+        data = { Nombre: get('nombre'), MontoTotal: getNum('monto-total') }; 
+        functionName = 'addDebt'; 
+        stateKey = 'debts'; 
+        break;
+      
+      // --- CAMBIO CLAVE: Nuevo 'case' para manejar los aportes a metas ---
+      case 'contribution-form':
+        const contributionData = {
+            goalId: get('goalId'),
+            goalName: get('goalName'),
+            sourceAccountId: get('sourceAccount'),
+            amount: getNum('monto'),
+            fecha: get('fecha'),
+            description: get('descripcion')
+        };
+        // Llama a la función específica para aportes
+        handleAddContribution(contributionData).finally(() => { 
+            submitBtn.textContent = originalBtnText; 
+            submitBtn.disabled = false; 
+        });
+        return; // Se usa 'return' para evitar la llamada a 'handleAdd'
+
+      default: 
+        throw new Error("Formulario desconocido.");
     }
-  });
+    
+    // La lógica genérica para añadir elementos se mantiene para los otros formularios
+    handleAdd(stateKey, functionName, data).finally(() => { 
+        submitBtn.textContent = originalBtnText; 
+        submitBtn.disabled = false; 
+    });
+
+  } catch (error) {
+    showNotification('error', error.message);
+    submitBtn.textContent = originalBtnText;
+    submitBtn.disabled = false;
+  }
+});
 
   // --- BACKEND COMMUNICATION ---
   function handleAdd(stateKey, functionName, data) {
@@ -701,19 +753,7 @@ function renderAccountCards() {
     }).withFailureHandler(err => showNotification('error', `Error de conexión: ${err.message}`))[fnMap[type]](id);
   }
   
-  function handleAddContribution(goalId, amount) {
-    const goal = state.goals.find(g => g.ID === goalId);
-    if (!goal || !amount || amount <= 0) return;
-    const newAmount = goal.MontoActual + amount;
-    google.script.run.withSuccessHandler(res => {
-        if (res.success) {
-          goal.MontoActual = newAmount;
-          showNotification('success', 'Contribución añadida.');
-          renderCurrentView();
-        } else { showNotification('error', `Error: ${res.message}`); }
-    }).withFailureHandler(err => showNotification('error', `Error de conexión: ${err.message}`))
-      .updateItem('goals', goalId, { MontoActual: newAmount });
-  }
+
   
   function handleAddPayment(debtId, amount) {
     const debt = state.debts.find(d => d.ID === debtId);
@@ -736,6 +776,136 @@ function openSidebar() {
   sidebar.classList.add('open');
   sidebarOverlay.classList.remove('hidden');
 }
+
+// En JavaScript.html
+
+// --- REEMPLAZA ESTA FUNCIÓN ---
+function renderGoals() {
+    if (!state.goals || state.goals.length === 0) { 
+        appContent.innerHTML = `<div class="card text-center py-8"><p class="text-gray-500">No hay metas definidas.</p></div>`; 
+        return; 
+    }
+    appContent.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" data-type="goals">
+        ${state.goals.map(goal => {
+            const percentage = Math.min((goal.MontoActual / goal.MontoObjetivo) * 100, 100);
+            return `
+                <div class="card flex flex-col justify-between" data-id="${goal.ID}">
+                    <div>
+                        <div class="flex justify-between items-start">
+                            <h3 class="card-title">${goal.Nombre}</h3>
+                            <button class="delete-btn"><i class="ph ph-trash"></i></button>
+                        </div>
+                        <p class="text-xl font-bold text-main">${currencyFormatter.format(goal.MontoActual)}</p>
+                        <p class="text-sm text-gray-500 mb-2">de ${currencyFormatter.format(goal.MontoObjetivo)}</p>
+                        <div class="w-full bg-white/10 rounded-full h-2.5 mb-4">
+                            <div class="bg-main h-2.5 rounded-full" style="width: ${percentage}%"></div>
+                        </div>
+                    </div>
+                    <button 
+                        class="add-contribution-btn main-btn w-full" 
+                        data-goal-id="${goal.ID}" 
+                        data-goal-name="${goal.Nombre}">
+                        Aportar a Meta
+                    </button>
+                </div>`;
+        }).join('')}
+    </div>`;
+}
+
+// --- AÑADE ESTA NUEVA FUNCIÓN ---
+function showContributionModal(goalId, goalName) {
+    if (!state.accounts || state.accounts.length === 0) {
+        showNotification('error', 'Crea una cuenta antes de añadir un aporte.');
+        return;
+    }
+    const accountOptions = state.accounts.map(a => `<option value="${a.ID}">${a.Nombre}</option>`).join('');
+    const today = new Date().toISOString().split('T')[0];
+
+    const content = `
+        <input type="hidden" id="goalId" value="${goalId}">
+        <input type="hidden" id="goalName" value="${goalName}">
+        <div class="flex gap-4">
+            <div class="flex-1">
+                <label for="sourceAccount" class="font-semibold text-sm mb-2 block">💳 Cuenta de Origen</label>
+                <select id="sourceAccount" class="w-full p-3 bg-white/10 border-2 border-white/20 rounded-lg focus:border-main outline-none" required>
+                    <option value="" disabled selected>Selecciona...</option>
+                    ${accountOptions}
+                </select>
+            </div>
+            <div class="flex-1">
+                <label for="monto" class="font-semibold text-sm mb-2 block">💵 Monto a Aportar</label>
+                <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-main">$</span>
+                    <input type="number" id="monto" placeholder="0.00" min="0.01" step="0.01" class="w-full p-3 pl-8 bg-white text-black rounded-lg border-2 border-gray-300" required>
+                </div>
+            </div>
+        </div>
+        <div>
+            <label for="fecha" class="font-semibold text-sm mb-2 block">🗓️ Fecha</label>
+            <input type="date" id="fecha" value="${today}" class="w-full p-3 bg-white text-black rounded-lg border-2 border-gray-300" required>
+        </div>
+        <div>
+            <label for="descripcion" class="font-semibold text-sm mb-2 block">📝 Descripción (Opcional)</label>
+            <textarea id="descripcion" class="w-full p-3 bg-white/10 border-2 border-white/20 rounded-lg focus:border-main outline-none" rows="2" placeholder="Ej: Ahorro quincenal"></textarea>
+        </div>`;
+    const buttons = `
+        <button type="button" class="cancel-btn w-full p-3 bg-white/10 rounded-lg font-semibold hover:bg-white/20">Cancelar</button>
+        <button type="submit" class="submit-btn w-full p-3 bg-main rounded-lg font-semibold hover:bg-pink-700 disabled:bg-gray-500">Registrar Aporte</button>`;
+    
+    showModal(createModalShell(`Aporte a: ${goalName}`, 'contribution-form', content, buttons));
+}
+
+// --- REEMPLAZA ESTA FUNCIÓN ---
+function showGoalModal() {
+    // CAMBIO CLAVE: Obtener cuentas para el dropdown
+    const accountOptions = state.accounts.map(a => `<option value="${a.ID}">${a.Nombre}</option>`).join('');
+
+    const content = `
+        <div><label for="nombre" class="font-semibold text-sm mb-2 block">🎯 Nombre de la Meta</label><input type="text" id="nombre" class="w-full p-3 bg-white/10 border-2 border-white/20 rounded-lg focus:border-main outline-none" required></div>
+        <div class="flex gap-4">
+            <div class="flex-1"><label for="monto-objetivo" class="font-semibold text-sm mb-2 block">💵 Monto Objetivo</label><div class="relative"><span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-main">$</span><input type="number" id="monto-objetivo" placeholder="0.00" min="0.01" step="0.01" class="w-full p-3 pl-8 bg-white text-black rounded-lg border-2 border-gray-300" required></div></div>
+            <div class="flex-1"><label for="monto-actual" class="font-semibold text-sm mb-2 block">💵 Ahorro Inicial (Opcional)</label><div class="relative"><span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-main">$</span><input type="number" id="monto-actual" placeholder="0.00" step="0.01" class="w-full p-3 pl-8 bg-white text-black rounded-lg border-2 border-gray-300"></div></div>
+        </div>
+        <div>
+            <label for="cuenta-asociada" class="font-semibold text-sm mb-2 block">🏦 Cuenta Asociada (Opcional)</label>
+            <select id="cuenta-asociada" class="w-full p-3 bg-white/10 border-2 border-white/20 rounded-lg focus:border-main outline-none">
+                <option value="">Ninguna</option>
+                ${accountOptions}
+            </select>
+        </div>`;
+    const buttons = `<button type="button" class="cancel-btn w-full p-3 bg-white/10 rounded-lg font-semibold hover:bg-white/20">Cancelar</button><button type="submit" class="submit-btn w-full p-3 bg-main rounded-lg font-semibold hover:bg-pink-700 disabled:bg-gray-500">Guardar Meta</button>`;
+    showModal(createModalShell('Nueva Meta de Ahorro', 'goal-form', content, buttons));
+}
+
+// --- REEMPLAZA ESTA FUNCIÓN ---
+function handleAddContribution(contributionData) {
+    return new Promise((resolve, reject) => {
+        google.script.run
+            .withSuccessHandler(res => {
+                if (res.success) {
+                    // Actualizar estado local
+                    state.transactions.push(res.transaction);
+                    const goal = state.goals.find(g => g.ID === res.updatedGoal.id);
+                    if (goal) {
+                        goal.MontoActual = res.updatedGoal.newAmount;
+                    }
+                    showNotification('success', 'Aporte registrado con éxito.');
+                    hideModal();
+                    renderCurrentView();
+                    resolve();
+                } else {
+                    showNotification('error', `Error: ${res.message || 'Error desconocido del servidor.'}`);
+                    reject(new Error(res.message));
+                }
+            })
+            .withFailureHandler(err => {
+                showNotification('error', `Error de conexión: ${err.message}`);
+                reject(err);
+            })
+            .addContribution(contributionData);
+    });
+}
+
 
 function closeSidebar() {
   sidebar.classList.remove('open');
