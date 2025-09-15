@@ -79,14 +79,14 @@ document.addEventListener('DOMContentLoaded', () => {
       renderCurrentView();
   }
 
-  const viewConfig = {
-      dashboard:    { title: 'Dashboard',       btnText: 'Nueva Transacción', iconClass: 'ph-plus', action: showTransactionModal },
-      transactions: { title: 'Transacciones',   btnText: 'Nueva Transacción', iconClass: 'ph-plus', action: showTransactionModal },
-      accounts:     { title: 'Cuentas',         btnText: 'Nueva Cuenta',      iconClass: 'ph-bank', action: showAccountModal },
-      categories:   { title: 'Categorías',      btnText: 'Nueva Categoría',   iconClass: 'ph-tag', action: showCategoryModal },
-      goals:        { title: 'Metas de Ahorro', btnText: 'Nueva Meta',        iconClass: 'ph-rocket-launch', action: showGoalModal },
-      debts:        { title: 'Deudas',          btnText: 'Nueva Deuda',       iconClass: 'ph-credit-card', action: showDebtModal }
-  };
+const viewConfig = {
+    dashboard:    { title: 'Dashboard',       btnText: 'Nueva Transacción', iconClass: 'ph-plus', action: () => showTransactionModal() },
+    transactions: { title: 'Transacciones',   btnText: 'Nueva Transacción', iconClass: 'ph-plus', action: () => showTransactionModal() },
+    accounts:     { title: 'Cuentas',         btnText: 'Nueva Cuenta',      iconClass: 'ph-bank', action: () => showAccountModal() },
+    categories:   { title: 'Categorías',      btnText: 'Nueva Categoría',   iconClass: 'ph-tag', action: () => showCategoryModal() },
+    goals:        { title: 'Metas de Ahorro', btnText: 'Nueva Meta',        iconClass: 'ph-rocket-launch', action: () => showGoalModal() },
+    debts:        { title: 'Deudas',          btnText: 'Nueva Deuda',       iconClass: 'ph-credit-card', action: () => showDebtModal() }
+};
 
   // --- MAIN RENDER FUNCTION ---
   function renderCurrentView() {
