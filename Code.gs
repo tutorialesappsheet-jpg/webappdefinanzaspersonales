@@ -1,10 +1,13 @@
-const SPREADSHEET_ID = '1sm0oVCaj7dyfDSnbX97NSxo4BjxJtqp8LrwYdGHwrd0'; // ⚠️ ¡IMPORTANTE! Pega aquí el ID de tu nueva hoja de cálculo.
+// Archivo: Code.gs (COMPLETO Y ACTUALIZADO)
+
+const SPREADSHEET_ID = '1sm0oVCaj7dyfDSnbX97NSxo4BjxJtqp8LrwYdGHwrd0'; // ⚠️ ¡Recuerda poner tu ID aquí!
 
 const SCHEMA = {
   accounts:     { sheetName: 'Cuentas',       columns: ['ID', 'Nombre', 'Tipo', 'SaldoInicial'] },
   categories:   { sheetName: 'Categorias',    columns: ['ID', 'Nombre', 'Tipo', 'Presupuesto'] },
   transactions: { sheetName: 'Transacciones', columns: ['ID', 'Fecha', 'Descripcion', 'Monto', 'CuentaID', 'Categoria', 'Tipo'] },
-  goals:        { sheetName: 'Metas',         columns: ['ID', 'Nombre', 'MontoObjetivo', 'MontoActual'] },
+  // --- CAMBIO CLAVE: Nueva columna 'CuentaAsociadaID' ---
+  goals:        { sheetName: 'Metas',         columns: ['ID', 'Nombre', 'MontoObjetivo', 'MontoActual', 'CuentaAsociadaID'] },
   debts:        { sheetName: 'Deudas',        columns: ['ID', 'Nombre', 'MontoTotal', 'Pagos'] }
 };
 
@@ -25,7 +28,6 @@ function getInitialData() {
     try {
       const sheet = ss.getSheetByName(sheetName);
       if (!sheet) throw new Error(`La hoja '${sheetName}' no fue encontrada.`);
-      // Pasamos el nombre de la entidad (key) a la función sheetToObjects
       data[key] = sheetToObjects(sheet, SCHEMA[key].columns, key);
     } catch (error) {
       errorMessages.push(`No se cargaron datos de '${sheetName}'. Error: ${error.message}`);
@@ -36,7 +38,6 @@ function getInitialData() {
   return data;
 }
 
-// --- VERSIÓN FINAL Y CORREGIDA DE sheetToObjects ---
 function sheetToObjects(sheet, headers, entityKey) {
   if (!sheet || sheet.getLastRow() < 2) return [];
   const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, headers.length).getValues();
@@ -45,9 +46,7 @@ function sheetToObjects(sheet, headers, entityKey) {
     const obj = {};
     headers.forEach((header, i) => {
       let value = row[i];
-      // Si estamos en la hoja de transacciones y la columna es "Fecha"
       if (entityKey === 'transactions' && header === 'Fecha' && value instanceof Date) {
-        // Convertimos la fecha a un formato de texto seguro (ISO String)
         value = value.toISOString();
       }
       obj[header] = value;
@@ -55,7 +54,6 @@ function sheetToObjects(sheet, headers, entityKey) {
     return obj;
   });
 }
-
 
 function addRow(entity, item) {
   const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -97,6 +95,49 @@ function updateItem(entity, id, updates) {
   return { success: false, message: 'ID no encontrado' };
 }
 
+// --- CAMBIO CLAVE: Nueva función para manejar aportes a metas ---
+function addContribution(contributionData) {
+  try {
+    const { goalId, sourceAccountId, amount, fecha, description, goalName } = contributionData;
+    
+    // 1. Crear una transacción de 'gasto' desde la cuenta de origen
+    const transaction = {
+      ID: 'TRN-' + new Date().getTime(),
+      Fecha: new Date(fecha.replace(/-/g, '/')),
+      Descripcion: description || `Aporte a meta: ${goalName}`,
+      Monto: amount,
+      CuentaID: sourceAccountId,
+      Categoria: 'Ahorro / Metas',
+      Tipo: 'gasto' 
+    };
+    addRow('transactions', transaction);
+
+    // 2. Actualizar el MontoActual de la meta
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const goalsSheet = ss.getSheetByName(SCHEMA.goals.sheetName);
+    const textFinder = goalsSheet.getRange("A:A").createTextFinder(goalId).matchEntireCell(true).findNext();
+    
+    if (textFinder) {
+      const row = textFinder.getRow();
+      const montoActualCol = SCHEMA.goals.columns.indexOf('MontoActual') + 1;
+      const currentAmount = goalsSheet.getRange(row, montoActualCol).getValue();
+      const newAmount = (Number(currentAmount) || 0) + Number(amount);
+      goalsSheet.getRange(row, montoActualCol).setValue(newAmount);
+      
+      // Devolvemos la transacción Y el nuevo monto de la meta
+      return { 
+        success: true, 
+        transaction: transaction, 
+        updatedGoal: { id: goalId, newAmount: newAmount } 
+      };
+    } else {
+      return { success: false, message: 'Meta no encontrada para actualizar el monto.' };
+    }
+  } catch(e) {
+    return { success: false, message: `Error en el servidor: ${e.message}` };
+  }
+}
+
 function addTransaction(transaction) {
   transaction.ID = 'TRN-' + new Date().getTime();
   if (!transaction.Fecha || isNaN(new Date(transaction.Fecha).getTime())) {
@@ -113,7 +154,16 @@ function addAccount(account) { account.ID = 'ACC-' + new Date().getTime(); retur
 function deleteAccount(id) { return deleteRowById('accounts', id); }
 function addCategory(category) { category.ID = 'CAT-' + new Date().getTime(); return addRow('categories', category); }
 function deleteCategory(id) { return deleteRowById('categories', id); }
-function addGoal(goal) { goal.ID = 'GOL-' + new Date().getTime(); goal.MontoActual = goal.MontoActual || 0; return addRow('goals', goal); }
+
+// --- CAMBIO CLAVE: 'addGoal' ahora guarda 'CuentaAsociadaID' ---
+function addGoal(goal) { 
+  goal.ID = 'GOL-' + new Date().getTime(); 
+  goal.MontoActual = goal.MontoActual || 0;
+  // Aseguramos que el campo exista, aunque sea vacío
+  goal.CuentaAsociadaID = goal.CuentaAsociadaID || ''; 
+  return addRow('goals', goal); 
+}
+
 function deleteGoal(id) { return deleteRowById('goals', id); }
 function addDebt(debt) { debt.ID = 'DEB-' + new Date().getTime(); debt.Pagos = debt.Pagos || '[]'; return addRow('debts', debt); }
 function deleteDebt(id) { return deleteRowById('debts', id); }
