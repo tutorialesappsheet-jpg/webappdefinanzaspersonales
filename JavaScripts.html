@@ -284,103 +284,170 @@ const viewConfig = {
       });
   }
 
-  function renderTable(type) {
-    if (type !== 'transactions') {
-        const data = state[type];
-        if (!data || data.length === 0) {
-            appContent.innerHTML = `<div class="card text-center py-8"><p class="text-gray-500">No hay datos para mostrar.</p></div>`;
-            return;
-        }
-        if (type === 'accounts') {
-            renderAccountCards();
-            return;
-        }
-        const headersConfig = { categories: ['Nombre', 'Tipo', 'Presupuesto'] };
-        const headers = headersConfig[type];
-        const dataRows = data.map(item => `
-            <tr data-id="${item.ID}">
-                <td>${item.Nombre}</td>
-                <td><span class="badge ${item.Tipo}">${item.Tipo}</span></td>
-                <td>${item.Tipo === 'gasto' ? currencyFormatter.format(item.Presupuesto || 0) : 'N/A'}</td>
-                <td class="text-right"><button class="delete-btn"><i class="ph ph-trash"></i></button></td>
-            </tr>`).join('');
-        appContent.innerHTML = `<div class="card overflow-x-auto"><table class="w-full" data-type="${type}"><thead><tr>${headers.map(h => `<th>${h}</th>`).join('')}<th></th></tr></thead><tbody>${dataRows}</tbody></table></div>`;
+function renderTable(type) {
+    // --- LÓGICA PARA LA VISTA DE CUENTAS (se maneja por separado) ---
+    if (type === 'accounts') {
+        renderAccountCards();
         return;
     }
 
-    const transactions = state.transactions;
-    const accountOptions = state.accounts.map(a => `<option value="${a.ID}">${a.Nombre}</option>`).join('');
+    // --- LÓGICA PARA LA VISTA DE TRANSACCIONES ---
+    if (type === 'transactions') {
+        const transactions = state.transactions;
+        const accountOptions = state.accounts.map(a => `<option value="${a.ID}">${a.Nombre}</option>`).join('');
 
-    const filtersHtml = `
-        <div class="card mb-6">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div>
-                    <label for="filter-search" class="text-sm font-medium text-gray-400 block mb-2">Buscar por descripción</label>
-                    <input type="text" id="filter-search" placeholder="Ej: Café, Supermercado..." class="w-full p-2 bg-dark-bg border border-dark-border rounded-lg">
-                </div>
-                <div>
-                    <label for="filter-account" class="text-sm font-medium text-gray-400 block mb-2">Cuenta</label>
-                    <select id="filter-account" class="w-full p-2 bg-dark-bg border border-dark-border rounded-lg">
-                        <option value="">Todas</option>
-                        ${accountOptions}
-                    </select>
-                </div>
-                <div>
-                    <label for="filter-type" class="text-sm font-medium text-gray-400 block mb-2">Tipo</label>
-                    <select id="filter-type" class="w-full p-2 bg-dark-bg border border-dark-border rounded-lg">
-                        <option value="">Todos</option>
-                        <option value="ingreso">Ingreso</option>
-                        <option value="gasto">Gasto</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="filter-month" class="text-sm font-medium text-gray-400 block mb-2">Mes</label>
-                    <input type="month" id="filter-month" class="w-full p-2 bg-dark-bg border border-dark-border rounded-lg text-gray-400">
+        const filtersHtml = `
+            <div class="card mb-6">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label for="filter-search" class="text-sm font-medium text-gray-400 block mb-2">Buscar por descripción</label>
+                        <input type="text" id="filter-search" placeholder="Ej: Café, Supermercado..." class="w-full p-2 bg-dark-bg border border-dark-border rounded-lg">
+                    </div>
+                    <div>
+                        <label for="filter-account" class="text-sm font-medium text-gray-400 block mb-2">Cuenta</label>
+                        <select id="filter-account" class="w-full p-2 bg-dark-bg border border-dark-border rounded-lg">
+                            <option value="">Todas</option>
+                            ${accountOptions}
+                        </select>
+                    </div>
+                    <div>
+                        <label for="filter-type" class="text-sm font-medium text-gray-400 block mb-2">Tipo</label>
+                        <select id="filter-type" class="w-full p-2 bg-dark-bg border border-dark-border rounded-lg">
+                            <option value="">Todos</option>
+                            <option value="ingreso">Ingreso</option>
+                            <option value="gasto">Gasto</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="filter-month" class="text-sm font-medium text-gray-400 block mb-2">Mes</label>
+                        <input type="month" id="filter-month" class="w-full p-2 bg-dark-bg border border-dark-border rounded-lg text-gray-400">
+                    </div>
                 </div>
             </div>
-        </div>
-    `;
+        `;
 
-    const dataRows = transactions.sort((a, b) => new Date(b.Fecha) - new Date(a.Fecha)).map(item => {
-        const account = state.accounts.find(a => a.ID === item.CuentaID);
-        return `
-            <tr data-id="${item.ID}">
-                <td>${new Date(item.Fecha).toLocaleDateString()}</td>
-                <td>${item.Descripcion || ''}</td>
-                <td>${item.Categoria}</td>
-                <td class="${item.Tipo === 'ingreso' ? 'text-green-400' : 'text-red-400'} font-medium">${currencyFormatter.format(item.Monto)}</td>
-                <td><span class="badge ${item.Tipo}">${item.Tipo}</span></td>
-                <td>${account ? account.Nombre : 'N/A'}</td>
-                <td class="text-right flex justify-end gap-4">
-                    <button class="edit-btn text-gray-500 hover:text-blue-400" title="Editar"><i class="ph ph-pencil-simple"></i></button>
-                    <button class="delete-btn text-gray-500 hover:text-red-400" title="Eliminar"><i class="ph ph-trash"></i></button>
-                </td>
-            </tr>`;
-    }).join('');
+        const dataRows = transactions.sort((a, b) => new Date(b.Fecha) - new Date(a.Fecha)).map(item => {
+            const account = state.accounts.find(a => a.ID === item.CuentaID);
+            return `
+                <tr data-id="${item.ID}">
+                    <td>${new Date(item.Fecha).toLocaleDateString()}</td>
+                    <td>${item.Descripcion || ''}</td>
+                    <td>${item.Categoria}</td>
+                    <td class="${item.Tipo === 'ingreso' ? 'text-green-400' : 'text-red-400'} font-medium">${currencyFormatter.format(item.Monto)}</td>
+                    <td><span class="badge ${item.Tipo}">${item.Tipo}</span></td>
+                    <td>${account ? account.Nombre : 'N/A'}</td>
+                    <td class="text-right flex justify-end gap-4">
+                        <button class="edit-btn text-gray-500 hover:text-blue-400" title="Editar"><i class="ph ph-pencil-simple"></i></button>
+                        <button class="delete-btn text-gray-500 hover:text-red-400" title="Eliminar"><i class="ph ph-trash"></i></button>
+                    </td>
+                </tr>`;
+        }).join('');
 
-    const tableHtml = `
-        <div class="card overflow-x-auto">
-            <table class="w-full" id="transactions-table" data-type="transactions">
-                <thead>
-                    <tr>
-                        <th>Fecha</th>
-                        <th>Descripción</th>
-                        <th>Categoría</th>
-                        <th>Monto</th>
-                        <th>Tipo</th>
-                        <th>Cuenta</th>
-                        <th></th>
-                    </tr>
-                </thead>
-                <tbody>
-                    ${transactions.length > 0 ? dataRows : `<tr><td colspan="7" class="text-center py-8 text-gray-500">No hay transacciones para mostrar.</td></tr>`}
-                </tbody>
-            </table>
-        </div>
-    `;
+        const tableHtml = `
+            <div class="card overflow-x-auto">
+                <table class="w-full" id="transactions-table" data-type="transactions">
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Descripción</th>
+                            <th>Categoría</th>
+                            <th>Monto</th>
+                            <th>Tipo</th>
+                            <th>Cuenta</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${transactions.length > 0 ? dataRows : `<tr><td colspan="7" class="text-center py-8 text-gray-500">No hay transacciones para mostrar.</td></tr>`}
+                    </tbody>
+                </table>
+            </div>
+        `;
+        appContent.innerHTML = filtersHtml + tableHtml;
+        return;
+    }
 
-    appContent.innerHTML = filtersHtml + tableHtml;
-  }
+    // --- LÓGICA PARA LA VISTA DE CATEGORÍAS ---
+    if (type === 'categories') {
+        const incomeCategories = state.categories.filter(c => c.Tipo === 'ingreso');
+        const expenseCategories = state.categories.filter(c => c.Tipo === 'gasto');
+        
+        const now = new Date();
+        const monthlyTransactions = state.transactions.filter(t => new Date(t.Fecha).getMonth() === now.getMonth() && new Date(t.Fecha).getFullYear() === now.getFullYear());
+
+        const totalExpenseBudget = expenseCategories
+            .filter(c => c.Subtipo === 'Fijo' || (c.Subtipo === 'Variable' && (c.Presupuesto || 0) > 0))
+            .reduce((sum, c) => sum + (c.Presupuesto || 0), 0);
+        const totalMonthlyExpenses = monthlyTransactions
+            .filter(t => t.Tipo === 'gasto' && t.Categoria !== 'Transferencia Saliente')
+            .reduce((sum, t) => sum + t.Monto, 0);
+        const expenseDifference = totalExpenseBudget - totalMonthlyExpenses;
+
+        const totalIncomeBudget = incomeCategories
+            .filter(c => c.Subtipo === 'Fijo')
+            .reduce((sum, c) => sum + (c.Presupuesto || 0), 0);
+        const totalMonthlyIncome = monthlyTransactions
+            .filter(t => t.Tipo === 'ingreso' && t.Categoria !== 'Transferencia Entrante')
+            .reduce((sum, t) => sum + t.Monto, 0);
+        const incomeDifference = totalMonthlyIncome - totalIncomeBudget;
+
+        appContent.innerHTML = `
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="flex flex-col gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="stat-card-new"><h3 class="flex items-center gap-2"><i class="ph ph-bank"></i>Presupuesto</h3><div class="value-highlight blue">${currencyFormatter.format(totalExpenseBudget)}</div></div>
+                        <div class="stat-card-new"><h3 class="flex items-center gap-2"><i class="ph ph-trend-down"></i>Gasto Real</h3><div class="value-highlight red">${currencyFormatter.format(totalMonthlyExpenses)}</div></div>
+                        <div class="stat-card-new"><h3 class="flex items-center gap-2"><i class="ph ph-scales"></i>Diferencia</h3><div class="value-highlight ${expenseDifference >= 0 ? 'green' : 'orange'}">${currencyFormatter.format(expenseDifference)}</div></div>
+                    </div>
+                    <div class="card overflow-x-auto">
+                        <h3 class="card-title">Categorías de Gasto</h3>
+                        <table class="w-full" data-type="categories">
+                            <thead><tr><th>Nombre</th><th>Subtipo</th><th>Presupuesto</th><th></th></tr></thead>
+                            <tbody>
+                                ${expenseCategories.length > 0 ? expenseCategories.map(item => `
+                                    <tr data-id="${item.ID}">
+                                        <td>${item.Nombre}</td>
+                                        <td>${item.Subtipo || 'N/A'}</td>
+                                        <td>${currencyFormatter.format(item.Presupuesto || 0)}</td>
+                                        <td class="text-right flex justify-end gap-4">
+                                            <button class="edit-category-btn text-gray-500 hover:text-blue-400" title="Editar"><i class="ph ph-pencil-simple"></i></button>
+                                            <button class="delete-btn text-gray-500 hover:text-red-400" title="Eliminar"><i class="ph ph-trash"></i></button>
+                                        </td>
+                                    </tr>`).join('') : `<tr><td colspan="4" class="text-center py-8 text-gray-500">No hay categorías de gasto.</td></tr>`}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="stat-card-new"><h3 class="flex items-center gap-2"><i class="ph ph-target"></i>Ingreso Esperado</h3><div class="value-highlight green">${currencyFormatter.format(totalIncomeBudget)}</div></div>
+                        <div class="stat-card-new"><h3 class="flex items-center gap-2"><i class="ph ph-trend-up"></i>Ingreso Real</h3><div class="value-highlight">${currencyFormatter.format(totalMonthlyIncome)}</div></div>
+                        <div class="stat-card-new"><h3 class="flex items-center gap-2"><i class="ph ph-scales"></i>Diferencia</h3><div class="value-highlight ${incomeDifference >= 0 ? 'green' : 'orange'}">${currencyFormatter.format(incomeDifference)}</div></div>
+                    </div>
+                    <div class="card overflow-x-auto">
+                        <h3 class="card-title">Categorías de Ingreso</h3>
+                        <table class="w-full" data-type="categories">
+                            <thead><tr><th>Nombre</th><th>Subtipo</th><th>Estimado</th><th></th></tr></thead>
+                            <tbody>
+                                ${incomeCategories.length > 0 ? incomeCategories.map(item => `
+                                    <tr data-id="${item.ID}">
+                                        <td>${item.Nombre}</td>
+                                        <td>${item.Subtipo || 'N/A'}</td>
+                                        <td>${currencyFormatter.format(item.Presupuesto || 0)}</td>
+                                        <td class="text-right flex justify-end gap-4">
+                                            <button class="edit-category-btn text-gray-500 hover:text-blue-400" title="Editar"><i class="ph ph-pencil-simple"></i></button>
+                                            <button class="delete-btn text-gray-500 hover:text-red-400" title="Eliminar"><i class="ph ph-trash"></i></button>
+                                        </td>
+                                    </tr>`).join('') : `<tr><td colspan="4" class="text-center py-8 text-gray-500">No hay categorías de ingreso.</td></tr>`}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        `;
+        return;
+    }
+}
 
   function applyTransactionFilters() {
     const searchTerm = document.getElementById('filter-search').value.toLowerCase();
@@ -566,16 +633,88 @@ const viewConfig = {
     const buttons = `<button type="button" class="cancel-btn w-full p-3 bg-white/10 rounded-lg font-semibold hover:bg-white/20">Cancelar</button><button type="submit" class="submit-btn w-full p-3 bg-main rounded-lg font-semibold hover:bg-pink-700 disabled:bg-gray-500">Guardar Cuenta</button>`;
     showModal(createModalShell('Nueva Cuenta', 'account-form', content, buttons));
   }
-  function showCategoryModal() {
+// En JavaScript.html
+// REEMPLAZA ESTA FUNCIÓN
+
+// En JavaScript.html
+// REEMPLAZA ESTA FUNCIÓN
+
+function showCategoryModal(categoryId = null) {
+    const isEditMode = categoryId !== null;
+    const category = isEditMode ? state.categories.find(c => c.ID === categoryId) : {};
+
     const content = `
-        <div><label for="nombre" class="font-semibold text-sm mb-2 block">🏷️ Nombre de la Categoría</label><input type="text" id="nombre" class="w-full p-3 bg-white/10 border-2 border-white/20 rounded-lg focus:border-main outline-none" required></div>
-        <div><label for="tipo" class="font-semibold text-sm mb-2 block">Tipo</label><select id="tipo" class="w-full p-3 bg-white/10 border-2 border-white/20 rounded-lg focus:border-main outline-none" required><option value="gasto">Gasto</option><option value="ingreso">Ingreso</option></select></div>
-        <div id="presupuesto-container"><label for="presupuesto" class="font-semibold text-sm mb-2 block">💵 Presupuesto Mensual (Opcional)</label><div class="relative"><span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-main">$</span><input type="number" id="presupuesto" placeholder="0.00" step="0.01" class="w-full p-3 pl-8 bg-white text-black rounded-lg border-2 border-gray-300"></div></div>`;
-    const buttons = `<button type="button" class="cancel-btn w-full p-3 bg-white/10 rounded-lg font-semibold hover:bg-white/20">Cancelar</button><button type="submit" class="submit-btn w-full p-3 bg-main rounded-lg font-semibold hover:bg-pink-700 disabled:bg-gray-500">Guardar Categoría</button>`;
-    showModal(createModalShell('Nueva Categoría', 'category-form', content, buttons));
-    const tipoSelect = document.getElementById('tipo'), presupuestoContainer = document.getElementById('presupuesto-container');
-    tipoSelect.addEventListener('change', () => { presupuestoContainer.style.display = tipoSelect.value === 'gasto' ? 'block' : 'none'; });
-  }
+        <input type="hidden" id="categoryId" value="${category.ID || ''}">
+        <div>
+            <label for="nombre" class="font-semibold text-sm mb-2 block">🏷️ Nombre de la Categoría</label>
+            <input type="text" id="nombre" value="${category.Nombre || ''}" class="w-full p-3 bg-white/10 border-2 border-white/20 rounded-lg focus:border-main outline-none" required>
+        </div>
+        <div>
+            <label for="tipo" class="font-semibold text-sm mb-2 block">Tipo</label>
+            <select id="tipo" class="w-full p-3 bg-white/10 border-2 border-white/20 rounded-lg focus:border-main outline-none" required>
+                <option value="" disabled ${!isEditMode ? 'selected' : ''}>Selecciona...</option>
+                <option value="gasto" ${category.Tipo === 'gasto' ? 'selected' : ''}>Gasto</option>
+                <option value="ingreso" ${category.Tipo === 'ingreso' ? 'selected' : ''}>Ingreso</option>
+            </select>
+        </div>
+        <div id="options-container" class="hidden space-y-5">
+            <div>
+                <label class="font-semibold text-sm mb-2 block">Subtipo</label>
+                <div id="subtipo-container" class="flex gap-4">
+                    <label class="subtipo-label flex-1 text-center p-3 border-2 border-white/20 rounded-lg cursor-pointer">
+                        <input type="radio" name="subtipo" value="Fijo" class="sr-only" ${category.Subtipo === 'Fijo' ? 'checked' : ''}> Fijo
+                    </label>
+                    <label class="subtipo-label flex-1 text-center p-3 border-2 border-white/20 rounded-lg cursor-pointer">
+                        <input type="radio" name="subtipo" value="Variable" class="sr-only" ${category.Subtipo === 'Variable' ? 'checked' : ''}> Variable
+                    </label>
+                </div>
+            </div>
+            <div id="presupuesto-container">
+                <label id="presupuesto-label" for="presupuesto" class="font-semibold text-sm mb-2 block"></label>
+                <div class="relative">
+                    <span class="absolute left-4 top-1/2 -translate-y-1/2 font-bold text-main">$</span>
+                    <input type="number" id="presupuesto" value="${category.Presupuesto || ''}" placeholder="0.00" step="0.01" class="w-full p-3 pl-8 bg-white text-black rounded-lg border-2 border-gray-300">
+                </div>
+            </div>
+        </div>`;
+        
+    const buttons = `<button type="button" class="cancel-btn w-full p-3 bg-white/10 rounded-lg font-semibold hover:bg-white/20">Cancelar</button><button type="submit" class="submit-btn w-full p-3 bg-main rounded-lg font-semibold hover:bg-pink-700 disabled:bg-gray-500">${isEditMode ? 'Guardar Cambios' : 'Crear Categoría'}</button>`;
+    
+    showModal(createModalShell(isEditMode ? 'Editar Categoría' : 'Nueva Categoría', 'category-form', content, buttons));
+    
+    const tipoSelect = document.getElementById('tipo');
+    const optionsContainer = document.getElementById('options-container');
+    const presupuestoContainer = document.getElementById('presupuesto-container');
+    const presupuestoLabel = document.getElementById('presupuesto-label');
+
+    const toggleOptions = () => {
+        const tipo = tipoSelect.value;
+        if (tipo === 'gasto' || tipo === 'ingreso') {
+            optionsContainer.classList.remove('hidden');
+            presupuestoContainer.style.display = 'block';
+            presupuestoLabel.textContent = tipo === 'gasto' ? '💵 Presupuesto Mensual (Opcional)' : '💵 Ingreso Estimado (Opcional)';
+        } else {
+            optionsContainer.classList.add('hidden');
+        }
+    };
+    
+    tipoSelect.addEventListener('change', toggleOptions);
+    
+    const subtipoLabels = document.querySelectorAll('.subtipo-label');
+    subtipoLabels.forEach(label => {
+        const radioInput = label.querySelector('input[type="radio"]');
+        if (radioInput.checked) {
+            label.classList.add('active');
+        }
+        label.addEventListener('click', () => {
+            subtipoLabels.forEach(l => l.classList.remove('active'));
+            label.classList.add('active');
+            radioInput.checked = true;
+        });
+    });
+
+    toggleOptions();
+}
 
   function showGoalModal() {
     const accountOptions = state.accounts.map(a => `<option value="${a.ID}">${a.Nombre}</option>`).join('');
@@ -675,6 +814,12 @@ const viewConfig = {
   });
   
   appContent.addEventListener('click', e => {
+
+    const editCategoryBtn = e.target.closest('.edit-category-btn');
+if (editCategoryBtn) {
+    const row = editCategoryBtn.closest('[data-id]');
+    showCategoryModal(row.dataset.id);
+}
     const editBtn = e.target.closest('.edit-btn');
     if (editBtn) {
         const row = editBtn.closest('[data-id]');
@@ -715,7 +860,13 @@ const viewConfig = {
     if (e.target.closest('.cancel-btn')) hideModal();
   });
   
-  modalContainer.addEventListener('submit', e => {
+  // En JavaScript.html
+// REEMPLAZA ESTE BLOQUE DE CÓDIGO COMPLETO
+
+// En JavaScript.html
+// REEMPLAZA ESTE BLOQUE COMPLETO
+
+modalContainer.addEventListener('submit', e => {
     e.preventDefault();
     const form = e.target;
     const submitBtn = form.querySelector('.submit-btn');
@@ -738,9 +889,7 @@ const viewConfig = {
                     .withSuccessHandler(res => {
                         if (res.success) {
                             const index = state.transactions.findIndex(t => t.ID === transactionId);
-                            if (index !== -1) {
-                                state.transactions[index] = { ...state.transactions[index], ...data };
-                            }
+                            if (index !== -1) { state.transactions[index] = { ...state.transactions[index], ...data }; }
                             showNotification('success', 'Transacción actualizada.');
                             hideModal();
                             renderCurrentView(); 
@@ -755,8 +904,45 @@ const viewConfig = {
                 stateKey = 'transactions';
             }
             break;
-        case 'account-form': data = { Nombre: get('nombre'), Tipo: get('tipo'), SaldoInicial: getNum('saldo') }; functionName = 'addAccount'; stateKey = 'accounts'; break;
-        case 'category-form': data = { Nombre: get('nombre'), Tipo: get('tipo'), Presupuesto: getNum('presupuesto') }; functionName = 'addCategory'; stateKey = 'categories'; break;
+
+        case 'account-form': 
+            data = { Nombre: get('nombre'), Tipo: get('tipo'), SaldoInicial: getNum('saldo') }; 
+            functionName = 'addAccount'; 
+            stateKey = 'accounts'; 
+            break;
+        
+        // --- CASE CORREGIDO ---
+        case 'category-form':
+            const categoryId = get('categoryId');
+            const subtipoRadio = form.querySelector('input[name="subtipo"]:checked');
+            data = { 
+                Nombre: get('nombre'), 
+                Tipo: get('tipo'), 
+                Presupuesto: getNum('presupuesto'),
+                Subtipo: subtipoRadio ? subtipoRadio.value : ''
+            };
+
+            if (categoryId) { // MODO EDICIÓN
+                google.script.run
+                    .withSuccessHandler(res => {
+                        if (res.success) {
+                            const index = state.categories.findIndex(c => c.ID === categoryId);
+                            if (index !== -1) { state.categories[index] = { ...state.categories[index], ...data }; }
+                            showNotification('success', 'Categoría actualizada.');
+                            hideModal();
+                            renderCurrentView();
+                        } else { showNotification('error', `Error: ${res.message}`); }
+                    })
+                    .withFailureHandler(err => showNotification('error', `Error: ${err.message}`))
+                    .updateItem('categories', categoryId, data);
+                submitBtn.textContent = originalBtnText; submitBtn.disabled = false;
+                return; // Importante: salir para no ejecutar la lógica de 'añadir'
+            } else { // MODO AÑADIR
+                functionName = 'addCategory';
+                stateKey = 'categories';
+            }
+            break;
+
         case 'goal-form': data = { Nombre: get('nombre'), MontoObjetivo: getNum('monto-objetivo'), MontoActual: getNum('monto-actual'), CuentaAsociadaID: get('cuenta-asociada') }; functionName = 'addGoal'; stateKey = 'goals'; break;
         case 'debt-form': data = { Nombre: get('nombre'), MontoTotal: getNum('monto-total'), MontoPagado: 0 }; functionName = 'addDebt'; stateKey = 'debts'; break;
         case 'contribution-form':
