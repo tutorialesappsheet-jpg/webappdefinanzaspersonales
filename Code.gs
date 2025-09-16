@@ -5,10 +5,9 @@ const SPREADSHEET_ID = '1sm0oVCaj7dyfDSnbX97NSxo4BjxJtqp8LrwYdGHwrd0'; // ⚠️
 // En Code.gs
 const SCHEMA = {
   accounts:     { sheetName: 'Cuentas',       columns: ['ID', 'Nombre', 'Tipo', 'SaldoInicial'] },
-  categories:   { sheetName: 'Categorias',    columns: ['ID', 'Nombre', 'Tipo', 'Presupuesto'] },
+  categories:   { sheetName: 'Categorias',    columns: ['ID', 'Nombre', 'Tipo', 'Presupuesto', 'Subtipo'] },
   transactions: { sheetName: 'Transacciones', columns: ['ID', 'Fecha', 'Descripcion', 'Monto', 'CuentaID', 'Categoria', 'Tipo'] },
   goals:        { sheetName: 'Metas',         columns: ['ID', 'Nombre', 'MontoObjetivo', 'MontoActual', 'CuentaAsociadaID'] },
-  // --- ESQUEMA DE DEUDAS ACTUALIZADO ---
   debts:        { sheetName: 'Deudas',        columns: ['ID', 'Nombre', 'MontoTotal', 'MontoPagado'] }
 };
 
